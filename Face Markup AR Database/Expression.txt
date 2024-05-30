@@ -1,0 +1,17 @@
+Male images are stored as: M-xx-yy.raw
+
+Females as: F-xx-yy.raw
+
+'xx' is a unique person identifier (from "00" to "70" for males and from "00" to "56" for females)
+
+'yy' specifies the features of each image; its meanings are described at the following table:
+
+1 : Neutral expression
+
+2 : Smile
+
+3 : Anger
+
+4 : Scream
+
+5 : left light on

@@ -1,0 +1,9 @@
+version: 1
+// This file is used to indicate an images that hasn't yet been marked up
+image_size_x: 2
+image_size_y: 2
+n_points: 2
+{
+0 1
+1 0
+}
