@@ -11,10 +11,11 @@ def euclidean_distance(p1, p2):
 
 
 # Defines folder with datasets
-base_path = r'B:\Github Repos\csc481A\Face Markup AR Database\points_22'
+base_path = r'B:\Github Repos\csc481A\AR_DB\points_22'
 
 # Collect all file paths
 all_files = glob.glob(os.path.join(base_path, 'm-*', '*.pts')) + glob.glob(os.path.join(base_path, 'w-*', '*.pts'))
+for file in all_files:
+    print (file, end='\n')
 
-print (all_files)
 
