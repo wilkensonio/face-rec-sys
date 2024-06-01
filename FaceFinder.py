@@ -9,13 +9,25 @@ def euclidean_distance(p1, p2):
 
 
 
-
+def filterdata():
 # Defines folder with datasets
-base_path = r'B:\Github Repos\csc481A\AR_DB\points_22'
+    base_path = r'B:\Github Repos\csc481A\AR_DB\points_22'
+    data_array = []
+    # Collect all file paths
+    all_files = glob.glob(os.path.join(base_path, 'm-*', '*.pts')) + glob.glob(os.path.join(base_path, 'w-*', '*.pts'))
+    for file in all_files:
+        with open(file, 'r') as f:
+            lines = f.readlines()
+            for line in lines[3:25] :
+                xx, yy = line.split()
+                data_array.append((xx, yy))
+                
+                #data_array 
+    print(data_array)           
+filterdata()
+    
+                
+        
 
-# Collect all file paths
-all_files = glob.glob(os.path.join(base_path, 'm-*', '*.pts')) + glob.glob(os.path.join(base_path, 'w-*', '*.pts'))
-for file in all_files:
-    print (file, end='\n')
 
 
