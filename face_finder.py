@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+"""
+@author: Wilkenson | Kyle | Aeron
+@date: 01/01/2024  
+"""
+
 import os
 from sklearn.model_selection import train_test_split
 import glob
