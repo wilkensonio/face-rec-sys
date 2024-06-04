@@ -47,10 +47,11 @@ def all_file_paths() -> list[str]:
     all_files: list[str] = glob.glob(os.path.join(base_path, 'm-*', '*.pts')) + \
         glob.glob(os.path.join(base_path, 'w-*', '*.pts'))
     all_files.sort()
+    print(all_files)
     return all_files
 
 
-def filter_data(paths: list[str]) -> list[tuple[float, float]]:
+def filter_data(paths: list[str]) -> list[tuple[int, str, str, float, float]]:
     """
     Extracts and filters data from files specified by the given paths.
 
@@ -60,24 +61,36 @@ def filter_data(paths: list[str]) -> list[tuple[float, float]]:
     Returns:
         list[tuple[float, float]]: A list of tuples containing filtered data points.
     """
-
-    filtered_data: list[tuple[float, float]] = []
+    
+    filtered_data: list[tuple[int, str, str, float, float]] = []
 
     for path in paths:
+        dir_name = os.path.basename(os.path.dirname(path))
+        file_name = os.path.basename(path)
+        point = 0
+        
+        
+        
+
         with open(path, 'r') as file:
             lines = file.readlines()
             for line in lines[3:len(lines) - 1]:
                 x, y = line.split()
-                filtered_data.append((float(x), float(y)))
-
+                data_points = point
+                point += 1
+                filtered_data.append((data_points, dir_name, file_name, float(x), float(y)))
+                
+                
+    
     return filtered_data
 
 
 def main():
     if __name__ == '__main__':
         file_paths: list[str] = all_file_paths()
-        data: list[tuple[float, float]] = filter_data(
+        data: list[tuple[int, str, str, float, float]] = filter_data(
             file_paths)  # each tuple is a point
+        print(data)
 
 
 main()
