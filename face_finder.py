@@ -80,6 +80,8 @@ def filter_data(paths: list[str]) -> list[tuple[float, float]]:
                 
 
         filtered_data.append((dir_name, file_name, points))
+        
+    print ("dir_name, file_name, points\n", filtered_data, "\n")
                 
                 
     
@@ -122,7 +124,8 @@ def main():
     for dir_name, file_name, points in data:
         features.append(get_features(points))
         labels.append(dir_name)
-        print(features, labels)
+        
+    print("Features:",features,"/n","labels", labels,"/n")
 
     features = np.array(features)
     labels = np.array(labels)
