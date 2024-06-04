@@ -7,10 +7,11 @@
 
 import os
 from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
 import glob
 import numpy as np
 
-
+# euclidean_distance function
 def euclidean_distance(p1: float, p2: float) -> float:
     """
     Calulates the Euclidean distance between two points.
@@ -24,7 +25,7 @@ def euclidean_distance(p1: float, p2: float) -> float:
     """
     return np.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
-
+# Glob files into one directory
 def all_file_paths() -> list[str]:
     """
     Retrieves a list of file paths for files in the specified dataset folder.
@@ -36,7 +37,7 @@ def all_file_paths() -> list[str]:
         FileNotFoundError: If the specified dataset folder does not exist.
     """
 
-    base_path: str = 'Face Markup AR Database/points_22'
+    base_path: str = 'AR_DB/points_22'
     base_folder: str = os.path.dirname(os.path.abspath(__file__))
     base_path: str = os.path.join(base_folder, base_path)
 
@@ -47,11 +48,10 @@ def all_file_paths() -> list[str]:
     all_files: list[str] = glob.glob(os.path.join(base_path, 'm-*', '*.pts')) + \
         glob.glob(os.path.join(base_path, 'w-*', '*.pts'))
     all_files.sort()
-    print(all_files)
     return all_files
 
-
-def filter_data(paths: list[str]) -> list[tuple[int, str, str, float, float]]:
+# Filter data from glob directoy into a list of tuples
+def filter_data(paths: list[str]) -> list[tuple[float, float]]:
     """
     Extracts and filters data from files specified by the given paths.
 
@@ -62,12 +62,12 @@ def filter_data(paths: list[str]) -> list[tuple[int, str, str, float, float]]:
         list[tuple[float, float]]: A list of tuples containing filtered data points.
     """
     
-    filtered_data: list[tuple[int, str, str, float, float]] = []
-
+    filtered_data = []
     for path in paths:
         dir_name = os.path.basename(os.path.dirname(path))
         file_name = os.path.basename(path)
-        point = 0
+        points = []
+        
         
         
         
@@ -76,21 +76,68 @@ def filter_data(paths: list[str]) -> list[tuple[int, str, str, float, float]]:
             lines = file.readlines()
             for line in lines[3:len(lines) - 1]:
                 x, y = line.split()
-                data_points = point
-                point += 1
-                filtered_data.append((data_points, dir_name, file_name, float(x), float(y)))
+                points.append((float(x), float(y)))
+                
+
+        filtered_data.append((dir_name, file_name, points))
                 
                 
     
     return filtered_data
 
+# Get features from the filtered data putting them into a list based on the points array
+def get_features(points: list[tuple[float, float]]) -> list[float]:
+    
+    features = []
+    points = np.array(points)
+    # 7 features needed for the model
+    eye_length_ratio = max(euclidean_distance(points[0], points[1]), euclidean_distance(points[5], points[6])) / euclidean_distance(points[7], points[12])
+    eye_distance_ratio = euclidean_distance(points[1], points[5]) / euclidean_distance(points[7], points[12])
+    nose_ratio = euclidean_distance(points[14], points[15]) / euclidean_distance(points[19], points[20])
+    lip_size_ratio = euclidean_distance(points[1], points[2]) / euclidean_distance(points[16], points[17])
+    lip_length_ratio = euclidean_distance(points[1], points[2]) / euclidean_distance(points[19], points[20])
+    eyebrow_length_ratio = max(euclidean_distance(points[3], points[4]), euclidean_distance(points[5], points[6])) / euclidean_distance(points[7], points[12])
+    aggressive_ratio = euclidean_distance(points[9], points[18]) / euclidean_distance(points[19], points[20])
+    # Appending features to a list
+    features.extend([eye_length_ratio, 
+                     eye_distance_ratio, 
+                     nose_ratio, 
+                     lip_size_ratio, 
+                     lip_length_ratio, 
+                     eyebrow_length_ratio, 
+                     aggressive_ratio
+                     ])
+    return features
+
 
 def main():
-    if __name__ == '__main__':
-        file_paths: list[str] = all_file_paths()
-        data: list[tuple[int, str, str, float, float]] = filter_data(
-            file_paths)  # each tuple is a point
-        print(data)
+    file_paths = all_file_paths()
+    data = filter_data(file_paths)  # each tuple is (dir_name, file_name, points)
+    
+    # Splitting dataset into features and labels for training/testing
+    features = []
+    labels = []
+    
+
+    for dir_name, file_name, points in data:
+        features.append(get_features(points))
+        labels.append(dir_name)
+        print(features, labels)
+
+    features = np.array(features)
+    labels = np.array(labels)
+
+    # Split the dataset into training and testing sets
+    X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=42)
+
+    print(f"Training set size: {len(X_train)}")
+    print(f"Testing set size: {len(X_test)}")
+
+    # sample 
+    print("Sample training data:", X_train[:5])
+    print("Sample testing data:", X_test[:5])
+
+if __name__ == '__main__':
+    main()
 
 
-main()
