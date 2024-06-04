@@ -127,15 +127,15 @@ def main():
     features = np.array(features)
     labels = np.array(labels)
 
-    # Split the dataset into training and testing sets
+    #Boiler plate code for splitting data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=42)
 
-    print(f"Training set size: {len(X_train)}")
-    print(f"Testing set size: {len(X_test)}")
+    # print(f"Training set size: {len(X_train)}")
+    # print(f"Testing set size: {len(X_test)}")
 
-    # sample 
-    print("Sample training data:", X_train[:5])
-    print("Sample testing data:", X_test[:5])
+    # # sample 
+    # print("Sample training data:", X_train[:5])
+    # print("Sample testing data:", X_test[:5])
 
 if __name__ == '__main__':
     main()
