@@ -68,10 +68,6 @@ def filter_data(paths: list[str]) -> list[tuple[float, float]]:
         file_name = os.path.basename(path)
         points = []
         
-        
-        
-        
-
         with open(path, 'r') as file:
             lines = file.readlines()
             for line in lines[3:len(lines) - 1]:
@@ -92,8 +88,8 @@ def get_features(points: list[tuple[float, float]]) -> list[float]:
     
     features = []
     points = np.array(points)
-    # 7 features needed for the model
-    eye_length_ratio = max(euclidean_distance(points[0], points[1]), euclidean_distance(points[5], points[6])) / euclidean_distance(points[7], points[12])
+    # 7 features needed for the model need to verify the number values in this code block
+    eye_length_ratio = euclidean_distance(points[9], points[10]) / euclidean_distance(points[8], points[13])
     eye_distance_ratio = euclidean_distance(points[1], points[5]) / euclidean_distance(points[7], points[12])
     nose_ratio = euclidean_distance(points[14], points[15]) / euclidean_distance(points[19], points[20])
     lip_size_ratio = euclidean_distance(points[1], points[2]) / euclidean_distance(points[16], points[17])
