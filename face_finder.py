@@ -7,9 +7,11 @@
 
 import os
 from sklearn.model_selection import train_test_split
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn import neighbors, datasets, metrics
+from sklearn.metrics import accuracy_score, multilabel_confusion_matrix
 import glob
 import numpy as np
+import matplotlib.pyplot as plt
 
 # euclidean_distance function
 def euclidean_distance(p1: float, p2: float) -> float:
@@ -90,12 +92,12 @@ def get_features(points: list[tuple[float, float]]) -> list[float]:
     points = np.array(points)
     # 7 features needed for the model need to verify the number values in this code block
     eye_length_ratio = euclidean_distance(points[9], points[10]) / euclidean_distance(points[8], points[13])
-    eye_distance_ratio = euclidean_distance(points[1], points[5]) / euclidean_distance(points[7], points[12])
-    nose_ratio = euclidean_distance(points[14], points[15]) / euclidean_distance(points[19], points[20])
-    lip_size_ratio = euclidean_distance(points[1], points[2]) / euclidean_distance(points[16], points[17])
-    lip_length_ratio = euclidean_distance(points[1], points[2]) / euclidean_distance(points[19], points[20])
-    eyebrow_length_ratio = max(euclidean_distance(points[3], points[4]), euclidean_distance(points[5], points[6])) / euclidean_distance(points[7], points[12])
-    aggressive_ratio = euclidean_distance(points[9], points[18]) / euclidean_distance(points[19], points[20])
+    eye_distance_ratio = euclidean_distance(points[0], points[1]) / euclidean_distance(points[8], points[13])
+    nose_ratio = euclidean_distance(points[15], points[16]) / euclidean_distance(points[20], points[21])
+    lip_size_ratio = euclidean_distance(points[2], points[3]) / euclidean_distance(points[17], points[18])
+    lip_length_ratio = euclidean_distance(points[2], points[3]) / euclidean_distance(points[20], points[21])
+    eyebrow_length_ratio = max(euclidean_distance(points[4], points[5]), euclidean_distance(points[6], points[7])) / euclidean_distance(points[8], points[13])
+    aggressive_ratio = euclidean_distance(points[10], points[19]) / euclidean_distance(points[20], points[21])
     # Appending features to a list
     features.extend([eye_length_ratio, 
                      eye_distance_ratio, 
@@ -126,7 +128,8 @@ def main():
     features = np.array(features)
     labels = np.array(labels)
 
-    #Boiler plate code for splitting data into training and testing sets
+    """Boiler plate code for splitting data into training and testing sets"""
+
     X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=42)
 
     # print(f"Training set size: {len(X_train)}")
@@ -135,6 +138,73 @@ def main():
     # # sample 
     # print("Sample training data:", X_train[:5])
     # print("Sample testing data:", X_test[:5])
+
+
+"""Sample code for Confusion Matrix to calculate precision, recall rate, and accuracy"""
+# actual = numpy.random.binomial(1,.9,size = 1000)
+# predicted = numpy.random.binomial(1,.9,size = 1000)
+
+# confusion_matrix = metrics.confusion_matrix(actual, predicted)
+
+# cm_display = metrics.ConfusionMatrixDisplay(confusion_matrix = confusion_matrix, display_labels = [0, 1])
+
+# cm_display.plot()
+# plt.show()
+
+
+"""Sample code for KNN classifier"""
+
+# n_neighbors = [5,15,25]
+# accuracy_scores = []
+
+# wine = datasets.load_wine()
+
+# data = wine.data
+# target = wine.target
+
+# traindata = []
+# traintarget = []
+
+# testdata = []
+# testtarget = []
+
+# for i in range(0,29):
+#     traindata.append(data[i])
+#     traintarget.append(target[i])
+# for i in range(29,59):
+#     testdata.append(data[i])
+#     testtarget.append(target[i])
+
+# for i in range(59,89):
+#     traindata.append(data[i])
+#     traintarget.append(target[i])
+
+# for i in range(89,119):
+#     testdata.append(data[i])
+#     testtarget.append(target[i])
+
+# for i in range(119,144):
+#     traindata.append(data[i])
+#     traintarget.append(target[i])
+
+# for i in range(144,178):
+#     testdata.append(data[i])
+#     testtarget.append(target[i])
+
+# for n in n_neighbors:
+#     knn = neighbors.KNeighborsClassifier(n)
+#     knn.fit(traindata, traintarget)
+#     predictions = knn.predict(testdata)
+#     print(f"neighbors {n}", predictions)
+#     accuracy = accuracy_score(testtarget, predictions)
+#     print(f"Accuracy for neighbor {n}: {accuracy}")
+#     accuracy_scores.append(accuracy)
+
+# average_accuracy = sum(accuracy_scores) / len(accuracy_scores)
+
+# print("Average accuracy: ", average_accuracy)
+
+
 
 if __name__ == '__main__':
     main()
