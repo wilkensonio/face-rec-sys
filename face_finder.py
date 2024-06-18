@@ -13,6 +13,7 @@ import glob
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import List, Dict
+import random
 
 # euclidean_distance function
 def euclidean_distance(p1: float, p2: float) -> float:
@@ -63,7 +64,7 @@ def all_file_paths() -> Dict[str, List[str]]:
 
 # Example usage
 directories_with_files = all_file_paths()
-print(directories_with_files)
+# print(directories_with_files)
 # Filter data from glob directoy into a list of tuples
 def filter_data(paths: list[str]) -> list[tuple[float, float]]:
     """
@@ -91,7 +92,7 @@ def filter_data(paths: list[str]) -> list[tuple[float, float]]:
 
         filtered_data.append((dir_name, file_name, points))
         
-    print ("dir_name, file_name, points\n", filtered_data, "\n")
+    # print ("dir_name, file_name, points\n", filtered_data, "\n")
                 
                 
     
@@ -125,31 +126,48 @@ def get_features(points: list[tuple[float, float]]) -> list[float]:
 def main():
     file_dict = all_file_paths()
     all_data = []
-    features = []
-    labels = []
+    training_features = []
+    training_labels = []
+    training_data = []
+    testing_data = []
+    testing_features = []
+    testing_labels = []
 
     # Iterate over each directory's files
     for dir_name, file_paths in file_dict.items():
-        data = filter_data(file_paths)  # Call filter_data with the correct argument
-        all_data.extend(data)  # Extend the all_data list with the results of filter_data
+        random.shuffle(file_paths)  # Shuffle the file paths to ensure randomness
+        # Splitting the data: first 3 for training, last one for testing
+        training_paths = file_paths[:3]  # First three files for training
+        testing_paths = file_paths[3:4]  # Only one file for testing
 
-    # Splitting dataset into features and labels for training/testing
+        # Process training data
+        for path in training_paths:
+            data = filter_data([path])  # filter_data expects a list
+            for dir_name, file_name, points in data:
+                training_features.append(get_features(points))
+                training_labels.append(dir_name)
+                training_data.append((dir_name, file_name, points))
+
+        # Process testing data
+        for path in testing_paths:
+            data = filter_data([path])  # filter_data expects a list
+            for dir_name, file_name, points in data:
+                testing_features.append(get_features(points))
+                testing_labels.append(dir_name)
+                testing_data.append((dir_name, file_name, points))
+            
     
-    
+    print("Training labels:", training_labels,"Training features:", training_features)
+    print("Testing labels:", testing_labels,"Testing features:", testing_features)
 
-        for dir_name, file_name, points in data:
-            features.append(get_features(points))
-            labels.append(dir_name)
-        
-    for feature, label in zip(features, labels):
-        print(f"Label: {label}, Features: {feature}")
-
-    features = np.array(features)
-    labels = np.array(labels)
+    train_features = np.array(training_features)
+    train_labels = np.array(training_labels)
+    test_features = np.array(testing_features)
+    test_labels = np.array(testing_labels)
 
     """Boiler plate code for splitting data into training and testing sets"""
 
-    X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=42)
+    # X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=42)
 
     # print(f"Training set size: {len(X_train)}")
     # print(f"Testing set size: {len(X_test)}")
