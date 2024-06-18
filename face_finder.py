@@ -12,6 +12,7 @@ from sklearn.metrics import accuracy_score, multilabel_confusion_matrix
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
+from typing import List, Dict
 
 # euclidean_distance function
 def euclidean_distance(p1: float, p2: float) -> float:
@@ -28,30 +29,41 @@ def euclidean_distance(p1: float, p2: float) -> float:
     return np.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
 # Glob files into one directory
-def all_file_paths() -> list[str]:
+def all_file_paths() -> Dict[str, List[str]]:
     """
-    Retrieves a list of file paths for files in the specified dataset folder.
+    Retrieves a dictionary of file paths for directories in the specified dataset folder
+    that contain 4 or more .pts files.
 
     Returns:
-        list[str]: A list of file paths for the dataset files.
+        Dict[str, List[str]]: A dictionary where each key is a directory name and the value
+        is a list of file paths for the .pts files in that directory.
 
     Raises:
         FileNotFoundError: If the specified dataset folder does not exist.
     """
 
-    base_path: str = 'AR_DB/points_22'
-    base_folder: str = os.path.dirname(os.path.abspath(__file__))
-    base_path: str = os.path.join(base_folder, base_path)
+    base_path = 'AR_DB/points_22'
+    base_folder = os.path.dirname(os.path.abspath(__file__))
+    base_path = os.path.join(base_folder, base_path)
 
     if not os.path.exists(base_path):
         raise FileNotFoundError('Could not find the dataset folder')
 
-    # Collect all file paths
-    all_files: list[str] = glob.glob(os.path.join(base_path, 'm-*', '*.pts')) + \
-        glob.glob(os.path.join(base_path, 'w-*', '*.pts'))
-    all_files.sort()
+    # Collect all file paths grouped by their parent directory
+    all_files = {}
+    for gender_prefix in ['m', 'w']:
+        dir_paths = glob.glob(os.path.join(base_path, f'{gender_prefix}-*'))
+        for dir_path in dir_paths:
+            files = glob.glob(os.path.join(dir_path, '*.pts'))
+            if len(files) >= 4:
+                dir_name = os.path.basename(dir_path)
+                all_files[dir_name] = files
+
     return all_files
 
+# Example usage
+directories_with_files = all_file_paths()
+print(directories_with_files)
 # Filter data from glob directoy into a list of tuples
 def filter_data(paths: list[str]) -> list[tuple[float, float]]:
     """
@@ -111,19 +123,26 @@ def get_features(points: list[tuple[float, float]]) -> list[float]:
 
 
 def main():
-    file_paths = all_file_paths()
-    data = filter_data(file_paths)  # each tuple is (dir_name, file_name, points)
-    
-    # Splitting dataset into features and labels for training/testing
+    file_dict = all_file_paths()
+    all_data = []
     features = []
     labels = []
+
+    # Iterate over each directory's files
+    for dir_name, file_paths in file_dict.items():
+        data = filter_data(file_paths)  # Call filter_data with the correct argument
+        all_data.extend(data)  # Extend the all_data list with the results of filter_data
+
+    # Splitting dataset into features and labels for training/testing
+    
     
 
-    for dir_name, file_name, points in data:
-        features.append(get_features(points))
-        labels.append(dir_name)
+        for dir_name, file_name, points in data:
+            features.append(get_features(points))
+            labels.append(dir_name)
         
-    print("Features:",features,"/n","labels", labels,"/n")
+    for feature, label in zip(features, labels):
+        print(f"Label: {label}, Features: {feature}")
 
     features = np.array(features)
     labels = np.array(labels)
