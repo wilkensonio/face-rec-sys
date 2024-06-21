@@ -8,12 +8,14 @@
 import os
 from sklearn.model_selection import train_test_split
 from sklearn import neighbors, datasets, metrics
-from sklearn.metrics import accuracy_score, multilabel_confusion_matrix
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score, multilabel_confusion_matrix, classification_report
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import List, Dict
 import random
+from sklearn.preprocessing import LabelEncoder
 
 # euclidean_distance function
 def euclidean_distance(p1: float, p2: float) -> float:
@@ -125,13 +127,23 @@ def get_features(points: list[tuple[float, float]]) -> list[float]:
 
 def main():
     file_dict = all_file_paths()
-    all_data = []
+    all_labels = [] #List of labels in txt form before we encode them
+    label_encoder = LabelEncoder()
+    #grabbing lables for encoding
+    for dir_name, file_paths in file_dict.items():
+        for path in file_paths:
+            all_labels.append(dir_name)
+            
+    all_labels_encoded = label_encoder.fit_transform(all_labels) # Encoding the labels
+    encoded_labels = {dir_name: label_encoder.transform([dir_name])[0] for dir_name in file_dict.keys()}
+    
     training_features = []
     training_labels = []
     training_data = []
     testing_data = []
     testing_features = []
     testing_labels = []
+    
 
     # Iterate over each directory's files
     for dir_name, file_paths in file_dict.items():
@@ -143,104 +155,48 @@ def main():
         # Process training data
         for path in training_paths:
             data = filter_data([path])  # filter_data expects a list
-            for dir_name, file_name, points in data:
+            for _, file_name, points in data:
                 training_features.append(get_features(points))
-                training_labels.append(dir_name)
+                training_labels.append(encoded_labels[dir_name])
                 training_data.append((dir_name, file_name, points))
 
         # Process testing data
         for path in testing_paths:
             data = filter_data([path])  # filter_data expects a list
-            for dir_name, file_name, points in data:
+            for _, file_name, points in data:
                 testing_features.append(get_features(points))
-                testing_labels.append(dir_name)
+                testing_labels.append(encoded_labels[dir_name])
                 testing_data.append((dir_name, file_name, points))
+        
+    print("Encoded labels mapping:", encoded_labels)
+            
             
     
-    print("Training labels:", training_labels,"Training features:", training_features)
-    print("Testing labels:", testing_labels,"Testing features:", testing_features)
+    # print("Training labels:", training_labels,"Training features:", training_features)
+    # print("Testing labels:", testing_labels,"Testing features:", testing_features)
 
     train_features = np.array(training_features)
     train_labels = np.array(training_labels)
     test_features = np.array(testing_features)
     test_labels = np.array(testing_labels)
+    
+    print("\nTraining labels:", training_labels)
+    print("Training features (first 5):", training_features[:5])
 
-    """Boiler plate code for splitting data into training and testing sets"""
+    print("\nTesting labels:", testing_labels)
+    print("Testing features (first 5):", testing_features[:5])
+    
+    knn = KNeighborsClassifier(n_neighbors=10)
+    knn.fit(train_features, train_labels)
 
-    # X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=42)
+    # Step 4: Test the model
+    predictions = knn.predict(test_features)
 
-    # print(f"Training set size: {len(X_train)}")
-    # print(f"Testing set size: {len(X_test)}")
-
-    # # sample 
-    # print("Sample training data:", X_train[:5])
-    # print("Sample testing data:", X_test[:5])
-
-
-"""Sample code for Confusion Matrix to calculate precision, recall rate, and accuracy"""
-# actual = numpy.random.binomial(1,.9,size = 1000)
-# predicted = numpy.random.binomial(1,.9,size = 1000)
-
-# confusion_matrix = metrics.confusion_matrix(actual, predicted)
-
-# cm_display = metrics.ConfusionMatrixDisplay(confusion_matrix = confusion_matrix, display_labels = [0, 1])
-
-# cm_display.plot()
-# plt.show()
-
-
-"""Sample code for KNN classifier"""
-
-# n_neighbors = [5,15,25]
-# accuracy_scores = []
-
-# wine = datasets.load_wine()
-
-# data = wine.data
-# target = wine.target
-
-# traindata = []
-# traintarget = []
-
-# testdata = []
-# testtarget = []
-
-# for i in range(0,29):
-#     traindata.append(data[i])
-#     traintarget.append(target[i])
-# for i in range(29,59):
-#     testdata.append(data[i])
-#     testtarget.append(target[i])
-
-# for i in range(59,89):
-#     traindata.append(data[i])
-#     traintarget.append(target[i])
-
-# for i in range(89,119):
-#     testdata.append(data[i])
-#     testtarget.append(target[i])
-
-# for i in range(119,144):
-#     traindata.append(data[i])
-#     traintarget.append(target[i])
-
-# for i in range(144,178):
-#     testdata.append(data[i])
-#     testtarget.append(target[i])
-
-# for n in n_neighbors:
-#     knn = neighbors.KNeighborsClassifier(n)
-#     knn.fit(traindata, traintarget)
-#     predictions = knn.predict(testdata)
-#     print(f"neighbors {n}", predictions)
-#     accuracy = accuracy_score(testtarget, predictions)
-#     print(f"Accuracy for neighbor {n}: {accuracy}")
-#     accuracy_scores.append(accuracy)
-
-# average_accuracy = sum(accuracy_scores) / len(accuracy_scores)
-
-# print("Average accuracy: ", average_accuracy)
-
+    # Evaluate the model
+    accuracy = accuracy_score(test_labels, predictions)
+    print(f"Accuracy: {accuracy * 100:.2f}%")
+    print("Classification Report:")
+    print(classification_report(test_labels, predictions))
 
 
 if __name__ == '__main__':
