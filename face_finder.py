@@ -7,9 +7,13 @@
 
 import os
 from sklearn.model_selection import train_test_split
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn import neighbors, datasets, metrics
+from sklearn.metrics import accuracy_score, multilabel_confusion_matrix
 import glob
 import numpy as np
+import matplotlib.pyplot as plt
+from typing import List, Dict
+import random
 
 # euclidean_distance function
 def euclidean_distance(p1: float, p2: float) -> float:
@@ -26,30 +30,41 @@ def euclidean_distance(p1: float, p2: float) -> float:
     return np.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
 # Glob files into one directory
-def all_file_paths() -> list[str]:
+def all_file_paths() -> Dict[str, List[str]]:
     """
-    Retrieves a list of file paths for files in the specified dataset folder.
+    Retrieves a dictionary of file paths for directories in the specified dataset folder
+    that contain 4 or more .pts files.
 
     Returns:
-        list[str]: A list of file paths for the dataset files.
+        Dict[str, List[str]]: A dictionary where each key is a directory name and the value
+        is a list of file paths for the .pts files in that directory.
 
     Raises:
         FileNotFoundError: If the specified dataset folder does not exist.
     """
 
-    base_path: str = 'AR_DB/points_22'
-    base_folder: str = os.path.dirname(os.path.abspath(__file__))
-    base_path: str = os.path.join(base_folder, base_path)
+    base_path = 'AR_DB/points_22'
+    base_folder = os.path.dirname(os.path.abspath(__file__))
+    base_path = os.path.join(base_folder, base_path)
 
     if not os.path.exists(base_path):
         raise FileNotFoundError('Could not find the dataset folder')
 
-    # Collect all file paths
-    all_files: list[str] = glob.glob(os.path.join(base_path, 'm-*', '*.pts')) + \
-        glob.glob(os.path.join(base_path, 'w-*', '*.pts'))
-    all_files.sort()
+    # Collect all file paths grouped by their parent directory
+    all_files = {}
+    for gender_prefix in ['m', 'w']:
+        dir_paths = glob.glob(os.path.join(base_path, f'{gender_prefix}-*'))
+        for dir_path in dir_paths:
+            files = glob.glob(os.path.join(dir_path, '*.pts'))
+            if len(files) >= 4:
+                dir_name = os.path.basename(dir_path)
+                all_files[dir_name] = files
+
     return all_files
 
+# Example usage
+directories_with_files = all_file_paths()
+# print(directories_with_files)
 # Filter data from glob directoy into a list of tuples
 def filter_data(paths: list[str]) -> list[tuple[float, float]]:
     """
@@ -77,7 +92,7 @@ def filter_data(paths: list[str]) -> list[tuple[float, float]]:
 
         filtered_data.append((dir_name, file_name, points))
         
-    print ("dir_name, file_name, points\n", filtered_data, "\n")
+    # print ("dir_name, file_name, points\n", filtered_data, "\n")
                 
                 
     
@@ -90,12 +105,12 @@ def get_features(points: list[tuple[float, float]]) -> list[float]:
     points = np.array(points)
     # 7 features needed for the model need to verify the number values in this code block
     eye_length_ratio = euclidean_distance(points[9], points[10]) / euclidean_distance(points[8], points[13])
-    eye_distance_ratio = euclidean_distance(points[1], points[5]) / euclidean_distance(points[7], points[12])
-    nose_ratio = euclidean_distance(points[14], points[15]) / euclidean_distance(points[19], points[20])
-    lip_size_ratio = euclidean_distance(points[1], points[2]) / euclidean_distance(points[16], points[17])
-    lip_length_ratio = euclidean_distance(points[1], points[2]) / euclidean_distance(points[19], points[20])
-    eyebrow_length_ratio = max(euclidean_distance(points[3], points[4]), euclidean_distance(points[5], points[6])) / euclidean_distance(points[7], points[12])
-    aggressive_ratio = euclidean_distance(points[9], points[18]) / euclidean_distance(points[19], points[20])
+    eye_distance_ratio = euclidean_distance(points[0], points[1]) / euclidean_distance(points[8], points[13])
+    nose_ratio = euclidean_distance(points[15], points[16]) / euclidean_distance(points[20], points[21])
+    lip_size_ratio = euclidean_distance(points[2], points[3]) / euclidean_distance(points[17], points[18])
+    lip_length_ratio = euclidean_distance(points[2], points[3]) / euclidean_distance(points[20], points[21])
+    eyebrow_length_ratio = max(euclidean_distance(points[4], points[5]), euclidean_distance(points[6], points[7])) / euclidean_distance(points[8], points[13])
+    aggressive_ratio = euclidean_distance(points[10], points[19]) / euclidean_distance(points[20], points[21])
     # Appending features to a list
     features.extend([eye_length_ratio, 
                      eye_distance_ratio, 
@@ -109,25 +124,50 @@ def get_features(points: list[tuple[float, float]]) -> list[float]:
 
 
 def main():
-    file_paths = all_file_paths()
-    data = filter_data(file_paths)  # each tuple is (dir_name, file_name, points)
+    file_dict = all_file_paths()
+    all_data = []
+    training_features = []
+    training_labels = []
+    training_data = []
+    testing_data = []
+    testing_features = []
+    testing_labels = []
+
+    # Iterate over each directory's files
+    for dir_name, file_paths in file_dict.items():
+        random.shuffle(file_paths)  # Shuffle the file paths to ensure randomness
+        # Splitting the data: first 3 for training, last one for testing
+        training_paths = file_paths[:3]  # First three files for training
+        testing_paths = file_paths[3:4]  # Only one file for testing
+
+        # Process training data
+        for path in training_paths:
+            data = filter_data([path])  # filter_data expects a list
+            for dir_name, file_name, points in data:
+                training_features.append(get_features(points))
+                training_labels.append(dir_name)
+                training_data.append((dir_name, file_name, points))
+
+        # Process testing data
+        for path in testing_paths:
+            data = filter_data([path])  # filter_data expects a list
+            for dir_name, file_name, points in data:
+                testing_features.append(get_features(points))
+                testing_labels.append(dir_name)
+                testing_data.append((dir_name, file_name, points))
+            
     
-    # Splitting dataset into features and labels for training/testing
-    features = []
-    labels = []
-    
+    print("Training labels:", training_labels,"Training features:", training_features)
+    print("Testing labels:", testing_labels,"Testing features:", testing_features)
 
-    for dir_name, file_name, points in data:
-        features.append(get_features(points))
-        labels.append(dir_name)
-        
-    print("Features:",features,"/n","labels", labels,"/n")
+    train_features = np.array(training_features)
+    train_labels = np.array(training_labels)
+    test_features = np.array(testing_features)
+    test_labels = np.array(testing_labels)
 
-    features = np.array(features)
-    labels = np.array(labels)
+    """Boiler plate code for splitting data into training and testing sets"""
 
-    #Boiler plate code for splitting data into training and testing sets
-    X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=42)
+    # X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=42)
 
     # print(f"Training set size: {len(X_train)}")
     # print(f"Testing set size: {len(X_test)}")
@@ -135,6 +175,73 @@ def main():
     # # sample 
     # print("Sample training data:", X_train[:5])
     # print("Sample testing data:", X_test[:5])
+
+
+"""Sample code for Confusion Matrix to calculate precision, recall rate, and accuracy"""
+# actual = numpy.random.binomial(1,.9,size = 1000)
+# predicted = numpy.random.binomial(1,.9,size = 1000)
+
+# confusion_matrix = metrics.confusion_matrix(actual, predicted)
+
+# cm_display = metrics.ConfusionMatrixDisplay(confusion_matrix = confusion_matrix, display_labels = [0, 1])
+
+# cm_display.plot()
+# plt.show()
+
+
+"""Sample code for KNN classifier"""
+
+# n_neighbors = [5,15,25]
+# accuracy_scores = []
+
+# wine = datasets.load_wine()
+
+# data = wine.data
+# target = wine.target
+
+# traindata = []
+# traintarget = []
+
+# testdata = []
+# testtarget = []
+
+# for i in range(0,29):
+#     traindata.append(data[i])
+#     traintarget.append(target[i])
+# for i in range(29,59):
+#     testdata.append(data[i])
+#     testtarget.append(target[i])
+
+# for i in range(59,89):
+#     traindata.append(data[i])
+#     traintarget.append(target[i])
+
+# for i in range(89,119):
+#     testdata.append(data[i])
+#     testtarget.append(target[i])
+
+# for i in range(119,144):
+#     traindata.append(data[i])
+#     traintarget.append(target[i])
+
+# for i in range(144,178):
+#     testdata.append(data[i])
+#     testtarget.append(target[i])
+
+# for n in n_neighbors:
+#     knn = neighbors.KNeighborsClassifier(n)
+#     knn.fit(traindata, traintarget)
+#     predictions = knn.predict(testdata)
+#     print(f"neighbors {n}", predictions)
+#     accuracy = accuracy_score(testtarget, predictions)
+#     print(f"Accuracy for neighbor {n}: {accuracy}")
+#     accuracy_scores.append(accuracy)
+
+# average_accuracy = sum(accuracy_scores) / len(accuracy_scores)
+
+# print("Average accuracy: ", average_accuracy)
+
+
 
 if __name__ == '__main__':
     main()
