@@ -1,5 +1,6 @@
 .venv
 .DS_STORE
 .vscode
-classification_reports/
-confusion_matrices_plt/
+**/classification_reports/
+**/confusion_matrices_plt/
+**/__pycache__/

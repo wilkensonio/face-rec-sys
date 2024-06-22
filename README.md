@@ -58,8 +58,10 @@ python3 or python
 
 cd into parent folder and run script
 ```bash
-python3 face_finder.py
+python3 main.py
 ```
+must be in the same folder as the main.py module
+
 once the script is done executing message will display in the terminal 
 then the report and plot will be save in thir respective folders.
 
