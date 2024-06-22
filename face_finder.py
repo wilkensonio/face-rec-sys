@@ -6,16 +6,15 @@
 """
 
 import os
-from sklearn.model_selection import train_test_split
-from sklearn import neighbors, datasets, metrics
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score, multilabel_confusion_matrix, classification_report
 import glob
 import numpy as np
-import matplotlib.pyplot as plt
 from typing import List, Dict
 import random
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.neural_network import MLPClassifier
+from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
 
 # euclidean_distance function
@@ -166,8 +165,15 @@ def organize(training_features, training_labels,
                 testing_features.append(get_features(points))
                 testing_labels.append(encoded_labels[dir_name])
 
+    training_features,testing_features = scale_features(training_features, testing_features) # Send to 172 scale features for number normalization
+    
     return training_features, training_labels, testing_features, testing_labels
 
+def scale_features(training_features, testing_features):
+    scaler = StandardScaler()
+    train_features = scaler.fit_transform(training_features)
+    test_features = scaler.transform(testing_features)
+    return train_features, test_features
 
 def knn(training_features, training_labels, testing_features, testing_labels):
     train_features = np.array(training_features)
@@ -175,22 +181,46 @@ def knn(training_features, training_labels, testing_features, testing_labels):
     test_features = np.array(testing_features)
     test_labels = np.array(testing_labels)
 
-    knn = KNeighborsClassifier(n_neighbors=10)
+    
+    knn = KNeighborsClassifier(n_neighbors=5, metric='euclidean')
     knn.fit(train_features, train_labels)
 
     # Step 4: Test the model
     predictions = knn.predict(test_features)
+    
+    # Unique labels in predictions
+    unique_predicted_labels = set(predictions)
+    print("Unique Predicted Labels:", unique_predicted_labels)
+
+    # Unique labels in the test set
+    unique_test_labels = set(test_labels)
+    print("Unique Test Labels:", unique_test_labels)
 
     # Evaluate the model
     accuracy = accuracy_score(test_labels, predictions)
     print(f"Accuracy: {accuracy * 100:.2f}%")
     print("Classification Report:")
-    print(classification_report(test_labels, predictions))
+    print(classification_report(test_labels, predictions, zero_division=0))
 
 
 def naives_bayes(training_features, training_labels, testing_features, testing_labels):
     gnd = GaussianNB()
     print(type(gnd))
+
+def ann(training_features, training_labels, testing_features, testing_labels):
+    ann_classifier = MLPClassifier(hidden_layer_sizes=(100,), max_iter=300, activation='relu', solver='adam', random_state=1)
+    ann_classifier.fit(training_features, training_labels)
+    ann_predictions = ann_classifier.predict(testing_features)
+    print("ANN Accuracy:", accuracy_score(testing_labels, ann_predictions))
+
+def svm(training_features, training_labels, testing_features, testing_labels):
+    svm_classifier = SVC(kernel='rbf', C=1)  # RBF kernel is sensitive to Euclidean distances between points
+    svm_classifier.fit(training_features, training_labels)
+    svm_predictions = svm_classifier.predict(testing_features)
+    print("SVM Accuracy:", accuracy_score(testing_labels, svm_predictions))
+
+def decision_tree(training_features, training_labels, testing_features, testing_labels):
+    pass
 
 
 def main():
@@ -215,8 +245,11 @@ def main():
         training_features, training_labels,
         testing_features, testing_labels, file_dict, encoded_labels)
 
-    # knn(training_features, training_labels, testing_features, testing_labels)
-
+    #knn(training_features, training_labels, testing_features, testing_labels)
+    #naives_bayes(training_features, training_labels, testing_features, testing_labels)
+    #ann(training_features, training_labels, testing_features, testing_labels)
+    #svm(training_features, training_labels, testing_features, testing_labels)
+    #decision_tree(training_features, training_labels, testing_features, testing_labels)
 
 if __name__ == '__main__':
     main()
