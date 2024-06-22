@@ -188,7 +188,8 @@ def organize(training_features: List, training_labels: List,
             for _, file_name, points in data:
                 testing_features.append(get_features(points))
                 testing_labels.append(encoded_labels[dir_name])
-
+    training_features, testing_features = scale_features(
+        training_features, testing_features)
     return training_features, training_labels, testing_features, testing_labels
 
 
@@ -231,7 +232,7 @@ def knn(training_features, training_labels, testing_features, testing_labels):
     # Evaluate the model
     accuracy = accuracy_score(test_labels, predictions)
     print(f"Accuracy: {accuracy * 100:.2f}%")
-    print("Classification Report:")
+    print("Classification Report: (KNN)")
     print(classification_report(test_labels, predictions, zero_division=0))
 
 
@@ -252,16 +253,19 @@ def naives_bayes(training_features, training_labels, testing_features, testing_l
 
     accuracy = accuracy_score(testing_labels, predictions)
     print(f"Accuracy: {accuracy * 100:.2f}%")
-    print("Classification Report:")
+    print("Classification Report: (naives bayes)")
     print(classification_report(testing_labels, predictions, zero_division=0))
 
 
 def ann(training_features, training_labels, testing_features, testing_labels):
     ann_classifier = MLPClassifier(hidden_layer_sizes=(
-        100,), max_iter=300, activation='relu', solver='adam', random_state=1)
+        100,), max_iter=10000, activation='relu', solver='adam', random_state=1)
     ann_classifier.fit(training_features, training_labels)
     ann_predictions = ann_classifier.predict(testing_features)
-    print("ANN Accuracy:", accuracy_score(testing_labels, ann_predictions))
+    accuracy = accuracy_score(testing_labels, ann_predictions)
+    print(f"Accuracy: {accuracy * 100:.2f}%")
+    print("Classification Report: (ANN)")
+    print(classification_report(testing_labels, ann_predictions, zero_division=0))
 
 
 def svm(training_features, training_labels, testing_features, testing_labels):
@@ -269,7 +273,10 @@ def svm(training_features, training_labels, testing_features, testing_labels):
     svm_classifier = SVC(kernel='rbf', C=1)
     svm_classifier.fit(training_features, training_labels)
     svm_predictions = svm_classifier.predict(testing_features)
-    print("SVM Accuracy:", accuracy_score(testing_labels, svm_predictions))
+    accuracy = accuracy_score(testing_labels, svm_predictions)
+    print(f"Accuracy: {accuracy * 100:.2f}%")
+    print("Classification Report: (SVM)")
+    print(classification_report(testing_labels, svm_predictions, zero_division=0))
 
 
 def decision_tree(training_features, training_labels, testing_features, testing_labels):
@@ -289,19 +296,17 @@ def display_report(file_dict: dict[str, str], encoded_labels: list[int]) -> None
         testing_features, testing_labels, file_dict, encoded_labels)
 
     # knn(training_features, training_labels, testing_features, testing_labels)
-
-    # print("------------------------------------------------------\n------------------------------------------------------")
-
+    # print("------------------------------------------------------")
     # naives_bayes(training_features, training_labels,
     #              testing_features, testing_labels)
-
-    print("------------------------------------------------------\n------------------------------------------------------")
+    # print("------------------------------------------------------")
     ann(training_features, training_labels, testing_features, testing_labels)
-    # print("------------------------------------------------------\n------------------------------------------------------")
-    # svm(training_features, training_labels, testing_features, testing_labels)
-    # print("------------------------------------------------------\n------------------------------------------------------")
-    # decision_tree(training_features, training_labels, testing_features, testing_labels)
-    # print("------------------------------------------------------\n------------------------------------------------------")
+    print("------------------------------------------------------")
+    svm(training_features, training_labels, testing_features, testing_labels)
+    print("------------------------------------------------------")
+    # decision_tree(training_features, training_labels,
+    #               testing_features, testing_labels)
+    # print("------------------------------------------------------")
 
 
 def main():
