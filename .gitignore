@@ -1,4 +1,5 @@
 .venv
 .DS_STORE
 .vscode
-.
+classification_reports/
+confusion_matrices_plt/
