@@ -2,7 +2,7 @@
 
 """
 @author: Wilkenson | Kyle | Aeron
-@date: 01/01/2024  
+@date: 01/01/2024
 """
 
 import os
@@ -19,6 +19,7 @@ from typing import List, Dict
 import random
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.naive_bayes import GaussianNB
+from sklearn.tree import DecisionTreeClassifier
 
 # euclidean_distance function
 
@@ -72,13 +73,7 @@ def all_file_paths() -> Dict[str, List[str]]:
     return all_files
 
 
-# Example usage
-directories_with_files = all_file_paths()
-# print(directories_with_files)
-# Filter data from glob directoy into a list of tuples
-
-
-def filter_data(paths: list[str]) -> list[tuple[float, float]]:
+def filter_data(paths: list[str]) -> list[tuple[str, float, float]]:
     """
     Extracts and filters data from files specified by the given paths.
 
@@ -86,10 +81,10 @@ def filter_data(paths: list[str]) -> list[tuple[float, float]]:
         paths (list[str]): A list of file paths from which to extract data.
 
     Returns:
-        list[tuple[float, float]]: A list of tuples containing filtered data points.
+        list[tuple[str, str, float]]: A list of tuples containing filtered data points.
     """
 
-    filtered_data = []
+    filtered_data: List[tuple[str, float, float]] = []
     for path in paths:
         dir_name = os.path.basename(os.path.dirname(path))
         file_name = os.path.basename(path)
@@ -177,15 +172,16 @@ def organize(training_features: List, training_labels: List,
 
         # Process training data
         for path in training_paths:
-            data = filter_data([path])  # filter_data expects a list
-            for _, file_name, points in data:
+            data: List[tuple[str, str, List[tuple[float, float]]]] = filter_data([
+                path])
+            for _, _, points in data:
                 training_features.append(get_features(points))
                 training_labels.append(encoded_labels[dir_name])
 
         # Process testing data
         for path in testing_paths:
             data = filter_data([path])  # filter_data expects a list
-            for _, file_name, points in data:
+            for _, _, points in data:
                 testing_features.append(get_features(points))
                 testing_labels.append(encoded_labels[dir_name])
     training_features, testing_features = scale_features(
@@ -200,7 +196,9 @@ def scale_features(training_features, testing_features):
     return train_features, test_features
 
 
-def knn(training_features, training_labels, testing_features, testing_labels):
+def knn(training_features: List[float], training_labels: List[int],
+        testing_features: List[float], testing_labels: List[int]
+        ) -> None:
     """
     Trains and evaluates a k-Nearest Neighbors (kNN) classifier.
 
@@ -217,26 +215,16 @@ def knn(training_features, training_labels, testing_features, testing_labels):
 
     knn = KNeighborsClassifier(n_neighbors=5, metric='euclidean')
     knn.fit(train_features, train_labels)
-
-    # Step 4: Test the model
     predictions = knn.predict(test_features)
-
-    # Unique labels in predictions
-    unique_predicted_labels = set(predictions)
-    # print("Unique Predicted Labels:", unique_predicted_labels)
-
-    # Unique labels in the test set
-    unique_test_labels = set(test_labels)
-    # print("Unique Test Labels:", unique_test_labels)
-
-    # Evaluate the model
     accuracy = accuracy_score(test_labels, predictions)
     print(f"Accuracy: {accuracy * 100:.2f}%")
     print("Classification Report: (KNN)")
     print(classification_report(test_labels, predictions, zero_division=0))
 
 
-def naives_bayes(training_features, training_labels, testing_features, testing_labels) -> None:
+def naives_bayes(training_features: List[float], training_labels: List[int],
+                 testing_features: List[float], testing_labels: List[int]
+                 ) -> None:
     """
     Trains and evaluates a Gaussian Naive Bayes classifier.
 
@@ -257,7 +245,9 @@ def naives_bayes(training_features, training_labels, testing_features, testing_l
     print(classification_report(testing_labels, predictions, zero_division=0))
 
 
-def ann(training_features, training_labels, testing_features, testing_labels):
+def ann(training_features: List[float], training_labels: List[int],
+        testing_features: List[float], testing_labels: List[int]
+        ) -> None:
     ann_classifier = MLPClassifier(hidden_layer_sizes=(
         100,), max_iter=10000, activation='relu', solver='adam', random_state=1)
     ann_classifier.fit(training_features, training_labels)
@@ -269,7 +259,6 @@ def ann(training_features, training_labels, testing_features, testing_labels):
 
 
 def svm(training_features, training_labels, testing_features, testing_labels):
-    # RBF kernel is sensitive to Euclidean distances between points
     svm_classifier = SVC(kernel='rbf', C=1)
     svm_classifier.fit(training_features, training_labels)
     svm_predictions = svm_classifier.predict(testing_features)
@@ -280,7 +269,13 @@ def svm(training_features, training_labels, testing_features, testing_labels):
 
 
 def decision_tree(training_features, training_labels, testing_features, testing_labels):
-    pass
+    tree_classifier = DecisionTreeClassifier(random_state=0)
+    tree_classifier.fit(training_features, training_labels)
+    predictions = tree_classifier.predict(testing_features)
+    accuracy = accuracy_score(testing_labels, predictions)
+    print(f"Accuracy: {accuracy * 100:.2f}%")
+    print("Classification Report: (decision tree)")
+    print(classification_report(testing_labels, predictions, zero_division=0))
 
 
 def display_report(file_dict: dict[str, str], encoded_labels: list[int]) -> None:
@@ -291,28 +286,39 @@ def display_report(file_dict: dict[str, str], encoded_labels: list[int]) -> None
     training_labels = []
     testing_features = []
     testing_labels = []
+
     training_features, training_labels, testing_features, testing_labels = organize(
         training_features, training_labels,
         testing_features, testing_labels, file_dict, encoded_labels)
 
-    # knn(training_features, training_labels, testing_features, testing_labels)
-    # print("------------------------------------------------------")
-    # naives_bayes(training_features, training_labels,
-    #              testing_features, testing_labels)
-    # print("------------------------------------------------------")
+    knn(training_features, training_labels, testing_features, testing_labels)
+    print("------------------------------------------------------")
+    naives_bayes(training_features, training_labels,
+                 testing_features, testing_labels)
+    print("------------------------------------------------------")
     ann(training_features, training_labels, testing_features, testing_labels)
     print("------------------------------------------------------")
     svm(training_features, training_labels, testing_features, testing_labels)
     print("------------------------------------------------------")
-    # decision_tree(training_features, training_labels,
-    #               testing_features, testing_labels)
-    # print("------------------------------------------------------")
+    decision_tree(training_features, training_labels,
+                  testing_features, testing_labels)
+
+#  to do
+# optimize the code
+# confusion matrix
+# write report
+# powerpoint presentation
+# wait for hossain response
 
 
 def main():
     file_dict = all_file_paths()
     # List of labels in txt form before we encode them
     all_labels = list(file_dict.keys())
+
+    for dirname, filepath in file_dict.items():
+        for file in filepath:
+            all_labels.append(dirname)
 
     label_encoder = LabelEncoder()
 
