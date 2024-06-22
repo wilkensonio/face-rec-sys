@@ -6,20 +6,20 @@
 """
 
 import os
-from sklearn.model_selection import train_test_split
-from sklearn import neighbors, datasets, metrics
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neural_network import MLPClassifier
-from sklearn.svm import SVC
-from sklearn.metrics import accuracy_score, multilabel_confusion_matrix, classification_report
+import shutil
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import List, Dict
 import random
 from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
+from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
 
 # euclidean_distance function
 
@@ -129,7 +129,7 @@ def get_features(points: list[tuple[float, float]]) -> list[float]:
         points[6], points[7])) / euclidean_distance(points[8], points[13])
     aggressive_ratio = euclidean_distance(
         points[10], points[19]) / euclidean_distance(points[20], points[21])
-    # Appending features to a list
+
     features.extend([eye_length_ratio,
                      eye_distance_ratio,
                      nose_ratio,
@@ -184,6 +184,7 @@ def organize(training_features: List, training_labels: List,
             for _, _, points in data:
                 testing_features.append(get_features(points))
                 testing_labels.append(encoded_labels[dir_name])
+
     training_features, testing_features = scale_features(
         training_features, testing_features)
     return training_features, training_labels, testing_features, testing_labels
@@ -194,32 +195,6 @@ def scale_features(training_features, testing_features):
     train_features = scaler.fit_transform(training_features)
     test_features = scaler.transform(testing_features)
     return train_features, test_features
-
-
-def knn(training_features: List[float], training_labels: List[int],
-        testing_features: List[float], testing_labels: List[int]
-        ) -> None:
-    """
-    Trains and evaluates a k-Nearest Neighbors (kNN) classifier.
-
-    Args:
-        training_features (List): Training feature vectors.
-        training_labels (List): Training labels.
-        testing_features (List): Testing feature vectors.
-        testing_labels (List): Testing labels.
-    """
-    train_features = np.array(training_features)
-    train_labels = np.array(training_labels)
-    test_features = np.array(testing_features)
-    test_labels = np.array(testing_labels)
-
-    knn = KNeighborsClassifier(n_neighbors=5, metric='euclidean')
-    knn.fit(train_features, train_labels)
-    predictions = knn.predict(test_features)
-    accuracy = accuracy_score(test_labels, predictions)
-    print(f"Accuracy: {accuracy * 100:.2f}%")
-    print("Classification Report: (KNN)")
-    print(classification_report(test_labels, predictions, zero_division=0))
 
 
 def naives_bayes(training_features: List[float], training_labels: List[int],
@@ -238,50 +213,102 @@ def naives_bayes(training_features: List[float], training_labels: List[int],
     gnd = GaussianNB()
     gnd.fit(training_features, training_labels)  # Training the model
     predictions = gnd.predict(testing_features)
-
-    accuracy = accuracy_score(testing_labels, predictions)
-    print(f"Accuracy: {accuracy * 100:.2f}%")
-    print("Classification Report: (naives bayes)")
-    print(classification_report(testing_labels, predictions, zero_division=0))
+    report = classification_report(
+        testing_labels, predictions, zero_division=0)
+    return report, testing_labels, predictions, 'Naives Bayes'
 
 
 def ann(training_features: List[float], training_labels: List[int],
         testing_features: List[float], testing_labels: List[int]
         ) -> None:
-    ann_classifier = MLPClassifier(hidden_layer_sizes=(
+
+    classifier = MLPClassifier(hidden_layer_sizes=(
         100,), max_iter=10000, activation='relu', solver='adam', random_state=1)
-    ann_classifier.fit(training_features, training_labels)
-    ann_predictions = ann_classifier.predict(testing_features)
-    accuracy = accuracy_score(testing_labels, ann_predictions)
-    print(f"Accuracy: {accuracy * 100:.2f}%")
-    print("Classification Report: (ANN)")
-    print(classification_report(testing_labels, ann_predictions, zero_division=0))
+    classifier.fit(training_features, training_labels)
+    predictions = classifier.predict(testing_features)
+    report = classification_report(
+        testing_labels, predictions, zero_division=0)
+
+    return report, testing_labels,  predictions, 'ANN'
 
 
-def svm(training_features, training_labels, testing_features, testing_labels):
-    svm_classifier = SVC(kernel='rbf', C=1)
-    svm_classifier.fit(training_features, training_labels)
-    svm_predictions = svm_classifier.predict(testing_features)
-    accuracy = accuracy_score(testing_labels, svm_predictions)
-    print(f"Accuracy: {accuracy * 100:.2f}%")
-    print("Classification Report: (SVM)")
-    print(classification_report(testing_labels, svm_predictions, zero_division=0))
+def knn(training_features: List[float], training_labels: List[int],
+        testing_features: List[float], testing_labels: List[int]
+        ) -> tuple[List[int], List[int], str]:
+    """
+    Trains and evaluates a k-Nearest Neighbors (kNN) classifier.
+
+    Args:
+        training_features (List): Training feature vectors.
+        training_labels (List): Training labels.
+        testing_features (List): Testing feature vectors.
+        testing_labels (List): Testing labels.
+    """
+
+    knn = KNeighborsClassifier(n_neighbors=5, metric='euclidean')
+    knn.fit(training_features, training_labels)
+    predictions = knn.predict(testing_features)
+    report = classification_report(
+        testing_labels, predictions, zero_division=0)
+
+    return report, testing_labels, predictions, 'KNN'
+
+
+def support_vector_machine(training_features, training_labels, testing_features, testing_labels):
+    classifier = SVC(kernel='rbf', C=1)
+    classifier.fit(training_features, training_labels)
+    predictions = classifier.predict(testing_features)
+    report = classification_report(
+        testing_labels, predictions, zero_division=0)
+    return report, testing_labels, predictions, 'SVM'
 
 
 def decision_tree(training_features, training_labels, testing_features, testing_labels):
     tree_classifier = DecisionTreeClassifier(random_state=0)
     tree_classifier.fit(training_features, training_labels)
     predictions = tree_classifier.predict(testing_features)
-    accuracy = accuracy_score(testing_labels, predictions)
-    print(f"Accuracy: {accuracy * 100:.2f}%")
-    print("Classification Report: (decision tree)")
-    print(classification_report(testing_labels, predictions, zero_division=0))
+    report = classification_report(
+        testing_labels, predictions, zero_division=0)
+    return report, testing_labels, predictions, 'Decision Tree'
 
 
-def display_report(file_dict: dict[str, str], encoded_labels: list[int]) -> None:
-    """
-    Displays the classification report for the model.
-    """
+def evaluation_metrics(testing_labels, predictions,
+                       model_name, output_dir='confusion_matrices_plt') -> None:
+    accuracy = accuracy_score(
+        testing_labels, predictions)
+    conf_matrix = confusion_matrix(testing_labels, predictions)
+
+    os.makedirs(output_dir, exist_ok=True)
+    plt.figure(figsize=(10, 8))
+    plt.imshow(conf_matrix, cmap='viridis', interpolation='nearest')
+    plt.colorbar()
+    plt.xlabel('Predicted Label')
+    plt.ylabel('True Label')
+    plt.title(f'Confusion Matrix - {model_name}')
+    file_path = os.path.join(output_dir, f'CM_{model_name}.png')
+    plt.savefig(file_path)
+    plt.pause(.1)
+    plt.close()
+
+    return accuracy, conf_matrix, model_name
+
+
+def write_report(report, accuracy, conf_matrix, model_name, output_dir='classification_reports'):
+    report_file = os.path.join(output_dir, f'report_{model_name}.txt')
+    with open(report_file, 'w') as f:
+        f.write(f"Model: {model_name}\n")
+        f.write(f"Accuracy: {accuracy * 100:.2f}%\n\n")
+        f.write(f"Classification Report:\n{report}\n\n")
+        f.write(f"{model_name} Confusion Matrix:\n")
+        np.savetxt(f, conf_matrix, fmt='%d')
+        f.write("\n")
+
+
+def print_report(file_dict: dict[str, str], encoded_labels: list[int],
+                 output_dir='classification_reports') -> None:
+
+    os.makedirs(output_dir, exist_ok=True)
+
     training_features = []
     training_labels = []
     testing_features = []
@@ -291,24 +318,55 @@ def display_report(file_dict: dict[str, str], encoded_labels: list[int]) -> None
         training_features, training_labels,
         testing_features, testing_labels, file_dict, encoded_labels)
 
-    knn(training_features, training_labels, testing_features, testing_labels)
-    print("------------------------------------------------------")
-    naives_bayes(training_features, training_labels,
-                 testing_features, testing_labels)
-    print("------------------------------------------------------")
-    ann(training_features, training_labels, testing_features, testing_labels)
-    print("------------------------------------------------------")
-    svm(training_features, training_labels, testing_features, testing_labels)
-    print("------------------------------------------------------")
-    decision_tree(training_features, training_labels,
-                  testing_features, testing_labels)
+    print("Report is being generated ...")
+    # ANN model
+    report_ann, testing_labels_ann, predictions_ann, model_name_ann = ann(
+        training_features, training_labels, testing_features, testing_labels)
 
-#  to do
-# optimize the code
-# confusion matrix
-# write report
-# powerpoint presentation
-# wait for hossain response
+    accuracy_ann, conf_matrix_ann, model_name_ann = evaluation_metrics(
+        testing_labels_ann, predictions_ann, model_name_ann)
+
+    write_report(report_ann, accuracy_ann, conf_matrix_ann, model_name_ann)
+
+    # KNN model
+    report_knn, testing_labels_knn, predictions_knn, model_name_knn = knn(
+        training_features, training_labels, testing_features, testing_labels)
+
+    accuracy_knn, conf_matrix_knn, model_name_knn = evaluation_metrics(
+        testing_labels_knn, predictions_knn, model_name_knn)
+
+    write_report(report_knn, accuracy_knn, conf_matrix_knn, model_name_knn)
+
+    # Naive Bayes model
+    report_nb, testing_labels_nb, predictions_nb, model_name_nb = naives_bayes(
+        training_features, training_labels, testing_features, testing_labels)
+
+    accuracy_nb, conf_matrix_nb, model_name_nb = evaluation_metrics(
+        testing_labels_nb, predictions_nb, model_name_nb)
+
+    write_report(report_nb, accuracy_nb, conf_matrix_nb, model_name_nb)
+
+    # SVM model
+    report_svm, testing_labels_svm, predictions_svm, model_name_svm = support_vector_machine(
+        training_features, training_labels, testing_features, testing_labels)
+
+    accuracy_svm, conf_matrix_svm, model_name_svm = evaluation_metrics(
+        testing_labels_svm, predictions_svm, model_name_svm)
+
+    write_report(report_svm, accuracy_svm, conf_matrix_svm, model_name_svm)
+
+    # Decision Tree model
+    report_dt, testing_labels_dt, predictions_dt, model_name_dt = decision_tree(
+        training_features, training_labels, testing_features, testing_labels)
+
+    accuracy_dt, conf_matrix_dt, model_name_dt = evaluation_metrics(
+        testing_labels_dt, predictions_dt, model_name_dt)
+
+    write_report(report_dt, accuracy_dt, conf_matrix_dt, model_name_dt)
+
+    print("Report generated successfully")
+    print("Check the classification_reports folder for the report")
+    print("Check the confusion_matrices_plt folder for the confusion matrices plots")
 
 
 def main():
@@ -328,7 +386,7 @@ def main():
     encoded_labels = {dir_name: label_encoder.transform(
         [dir_name])[0] for dir_name in file_dict.keys()}
 
-    display_report(file_dict, encoded_labels)
+    print_report(file_dict, encoded_labels)
 
 
 if __name__ == '__main__':
