@@ -4,7 +4,7 @@ Contributors: Wilkenson | Aeron | Kyle
 # Face Recognition Classifier 
 This Python script performs facial recognition using various machine learning models on a dataset of facial landmarks (`.pts` files). It extracts features from the landmarks, organizes the data into training and testing sets, trains several classifiers, evaluates their performance, and generates classification reports along with confusion matrices.
 
-## Overview
+## Overview or go to [run project](#step-1) 
 The script performs the following tasks:
 - Loads facial landmark data from `.pts` files in specified directories.
 - Extracts and filters data points.
@@ -37,6 +37,7 @@ python -m venv /path/to/new/virtual/environment
 | Windows    | cmd.exe            | `C:\> <venv>\Scripts\activate.bat`                       |
 | PowerShell | PowerShell (Windows)| `PS C:\> <venv>\Scripts\Activate.ps1`                    |
 
+<a name='step-1'></a>
  
 # Run 
 
