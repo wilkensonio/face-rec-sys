@@ -42,6 +42,7 @@ python -m venv /path/to/new/virtual/environment
 # Run 
 
 `step-1 `
+
 Clone repo and 
 Navigate to the parent directory of the project (cd CSC481A) and type one of the commands below 
 
