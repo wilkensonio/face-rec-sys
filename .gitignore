@@ -3,4 +3,7 @@
 .vscode
 **/classification_reports/
 **/confusion_matrices_plt/
+**/roc_curves/
+**/roc_curves_plt/
+**/roc_repot/
 **/__pycache__/
