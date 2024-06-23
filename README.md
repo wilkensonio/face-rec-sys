@@ -42,8 +42,8 @@ python -m venv /path/to/new/virtual/environment
 # Run 
 
 `step-1 `
-
-Navigate to the parent directory of the project and type one of the commands below 
+Clone repo and 
+Navigate to the parent directory of the project (cd CSC481A) and type one of the commands below 
 
 ## MacOS: `bash run`
 
