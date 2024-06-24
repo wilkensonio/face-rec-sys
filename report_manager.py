@@ -2,8 +2,7 @@ import os
 import numpy as np
 import os
 import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.metrics import roc_curve, auc
+from plot import Plot
 """
 Report Manager for Face Recognition
 This class is responsible for generating and writing the 
@@ -12,7 +11,10 @@ And also for plotting the confusion matrix.
 """
 
 
-class ReportManager:
+class ReportManager(Plot):
+    def __init__(self):
+        super().__init__()
+
     def classification_report(self, report, accuracy, conf_matrix, model_name, type='',
                               output_dir='classification_reports'
                               ) -> None:
@@ -54,8 +56,8 @@ class ReportManager:
         accuracy_ann, conf_matrix_ann, model_name_ann = self.evaluation_metrics(
             testing_labels_ann, predictions_ann, model_name_ann)
 
-        fpr_ann, tpr_ann, roc_auc_ann = self.roc_curve(testing_labels_ann,
-                                                       predictions_ann, model_name_ann)
+        fpr_ann, tpr_ann, roc_auc_ann = self.plt_roc_curve(testing_labels_ann,
+                                                           predictions_ann, model_name_ann)
 
         self.classification_report(report_ann, accuracy_ann,
                                    conf_matrix_ann, model_name_ann)
@@ -69,8 +71,8 @@ class ReportManager:
         accuracy_knn, conf_matrix_knn, model_name_knn = self.evaluation_metrics(
             testing_labels_knn, predictions_knn, model_name_knn)
 
-        fpr_knn, tpr_knn, roc_auc_knn = self.roc_curve(testing_labels_knn,
-                                                       predictions_knn, model_name_knn)
+        fpr_knn, tpr_knn, roc_auc_knn = self.plt_roc_curve(testing_labels_knn,
+                                                           predictions_knn, model_name_knn)
 
         self.classification_report(report_knn, accuracy_knn,
                                    conf_matrix_knn, model_name_knn)
@@ -84,7 +86,7 @@ class ReportManager:
         accuracy_nb, conf_matrix_nb, model_name_nb = self.evaluation_metrics(
             testing_labels_nb, predictions_nb, model_name_nb)
 
-        fpr_nb, tpr_nb, roc_auc_nb = self.roc_curve(
+        fpr_nb, tpr_nb, roc_auc_nb = self.plt_roc_curve(
             testing_labels_nb, predictions_nb, model_name_nb)
 
         self.classification_report(report_nb, accuracy_nb,
@@ -99,8 +101,8 @@ class ReportManager:
         accuracy_svm, conf_matrix_svm, model_name_svm = self.evaluation_metrics(
             testing_labels_svm, predictions_svm, model_name_svm)
 
-        fpr_svm, tpr_svm, roc_auc_svm = self.roc_curve(testing_labels_svm,
-                                                       predictions_svm, model_name_svm)
+        fpr_svm, tpr_svm, roc_auc_svm = self.plt_roc_curve(testing_labels_svm,
+                                                           predictions_svm, model_name_svm)
 
         self.classification_report(report_svm, accuracy_svm,
                                    conf_matrix_svm, model_name_svm)
@@ -114,7 +116,7 @@ class ReportManager:
         accuracy_dt, conf_matrix_dt, model_name_dt = self.evaluation_metrics(
             testing_labels_dt, predictions_dt, model_name_dt)
 
-        fpr_dt, tpr_dt, roc_auc_dt = self.roc_curve(
+        fpr_dt, tpr_dt, roc_auc_dt = self.plt_roc_curve(
             testing_labels_dt, predictions_dt, model_name_dt)
 
         self.classification_report(report_dt, accuracy_dt,

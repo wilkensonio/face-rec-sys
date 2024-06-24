@@ -46,9 +46,9 @@ class Plot:
 
         return accuracy, conf_matrix, model_name
 
-    def roc_curve(self, testing_labels, predictions,
-                  model_name, output_dir='roc_curves_plt'
-                  ) -> tuple[dict, dict, dict]:
+    def plt_roc_curve(self, testing_labels, predictions,
+                      model_name, output_dir='roc_curves_plt'
+                      ) -> tuple[dict, dict, dict]:
         """
         Plots One-vs-Rest (OvR) ROC curves for a multiclass classification problem.
 
@@ -61,6 +61,7 @@ class Plot:
         Returns:
             tuple: A tuple containing the false positive rate, true positive rate, and ROC area.
         """
+
         os.makedirs(output_dir, exist_ok=True)
 
         lb = LabelBinarizer()
