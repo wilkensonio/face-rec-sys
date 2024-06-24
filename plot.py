@@ -3,6 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import accuracy_score, confusion_matrix, roc_curve, auc
 from sklearn.preprocessing import LabelBinarizer
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
+from sklearn.svm import SVC
+from sklearn.naive_bayes import GaussianNB
+from sklearn.tree import DecisionTreeClassifier
 
 
 class Plot:
@@ -12,6 +17,13 @@ class Plot:
     and (roc_curve) plotting ROC curve for a given model.
 
     """
+
+    def __init__(self, training_features=[], training_labels=[],
+                 testing_features=[], testing_labels=[]):
+        self.training_features = training_features
+        self.training_labels = training_labels
+        self.testing_features = testing_features
+        self.testing_labels = testing_labels
 
     def evaluation_metrics(self, testing_labels, predictions,
                            model_name, output_dir='confusion_matrices_plt') -> tuple[float, np.ndarray, str]:
@@ -62,8 +74,6 @@ class Plot:
             tuple: A tuple containing the false positive rate, true positive rate, and ROC area.
         """
 
-        os.makedirs(output_dir, exist_ok=True)
-
         lb = LabelBinarizer()
         lb.fit(testing_labels)
         y_true = lb.transform(testing_labels)
@@ -88,6 +98,7 @@ class Plot:
             plt.plot(fpr[i], tpr[i], color=color, lw=2,
                      label=f'ROC curve (class {lb.classes_[i]}) (area = {roc_auc[i]:0.2f})')
 
+        os.makedirs(output_dir, exist_ok=True)
         plt.plot([0, 1], [0, 1], color='gray', lw=1, linestyle='--')
         plt.xlim([0.0, 1.0])
         plt.ylim([0.0, 1.05])
@@ -95,6 +106,70 @@ class Plot:
         plt.ylabel('True Positive Rate')
         plt.title(f'ROC Curves - {model_name}')
         plt.legend(loc="lower right")
-        plt.savefig(os.path.join(output_dir, f'ROC_{model_name}.png'))
+        file_path = plt.savefig(os.path.join(
+            output_dir, f'ROC_{model_name}.png'))
+        # plt.savefig(file_path)
+        plt.pause(.1)
         plt.close()
         return fpr, tpr, roc_auc
+
+    def plt_avg_roc(self, classifiers, X_test, y_test, output_dir='avg_roc_curves_plt'):
+        """
+        Plots the average ROC curve for the given classifiers.
+
+        Parameters:
+        classifiers (list): List of trained classifiers.
+        X_test (array-like): Test features.
+        y_test (array-like): True labels for the test data.
+        """
+        os.makedirs(output_dir, exist_ok=True)
+        tprs = []
+        aucs = []
+        mean_fpr = np.linspace(0, 1, 100)
+
+        plt.figure(figsize=(10, 8))
+        colors = ['blue', 'green', 'red', 'purple', 'orange']
+        for i, (clf, color) in enumerate(zip(classifiers, colors)):
+            model_name = type(clf).__name__
+            probas_ = clf.predict_proba(X_test)
+            fpr, tpr, thresholds = roc_curve(
+                y_test, probas_[:, 1], pos_label=1)
+            tprs.append(np.interp(mean_fpr, fpr, tpr))
+            tprs[-1][0] = 0.0
+            roc_auc = auc(fpr, tpr)
+            aucs.append(roc_auc)
+            plt.plot(fpr, tpr, lw=1, alpha=0.7, color=color,
+                     label=f'{model_name} ROC fold {i+1} (AUC = {roc_auc:.2f})')
+
+        mean_tpr = np.mean(tprs, axis=0)
+        mean_tpr[-1] = 1.0
+        mean_auc = auc(mean_fpr, mean_tpr)
+
+        plt.plot(mean_fpr, mean_tpr, color='b',
+                 label=f'Mean ROC (AUC = {mean_auc:.2f})', lw=2, alpha=0.8)
+
+        plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r', alpha=.8)
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.05])
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        plt.title('Receiver Operating Characteristic')
+        plt.legend(loc="lower right")
+        file_path = os.path.join(output_dir, 'avg_roc_curve.png')
+        plt.savefig(file_path)
+        plt.close()
+
+    def plot_classifier(self):
+        classifiers = [
+            KNeighborsClassifier(),
+            SVC(probability=True),
+            DecisionTreeClassifier(),
+            GaussianNB(),
+            MLPClassifier(max_iter=10000)
+        ]
+
+        for clf in classifiers:
+            clf.fit(self.training_features, self.training_labels)
+
+        self.plt_avg_roc(
+            classifiers, self.testing_features, self.testing_labels)

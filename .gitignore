@@ -6,4 +6,5 @@
 **/roc_curves/
 **/roc_curves_plt/
 **/roc_repot/
+**/avg_roc_curves_plt/
 **/__pycache__/
