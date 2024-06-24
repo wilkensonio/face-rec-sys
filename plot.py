@@ -90,10 +90,9 @@ class Plot:
             fpr[i], tpr[i], _ = roc_curve(y_true[:, i], predictions[:, 0])
             roc_auc[i] = auc(fpr[i], tpr[i])
 
-        #  plot the roc curve for the model and save it to a file in the output directory
+        # Plot the ROC curves for each class
         plt.figure()
-        colors = ['blue', 'red', 'green', 'purple',
-                  'orange', 'brown', 'pink', 'gray', 'olive', 'cyan', 'magenta', 'yellow', 'black']
+        colors = ['blue', 'red', 'green', 'purple', 'orange', 'brown']
         for i, color in zip(range(len(lb.classes_)), colors):
             plt.plot(fpr[i], tpr[i], color=color, lw=2,
                      label=f'ROC curve (class {lb.classes_[i]}) (area = {roc_auc[i]:0.2f})')
@@ -106,10 +105,9 @@ class Plot:
         plt.ylabel('True Positive Rate')
         plt.title(f'ROC Curves - {model_name}')
         plt.legend(loc="lower right")
-        file_path = plt.savefig(os.path.join(
-            output_dir, f'ROC_{model_name}.png'))
-        # plt.savefig(file_path)
-        plt.pause(.1)
+        file_path = os.path.join(
+            output_dir, f'ROC_{model_name}.png')
+        plt.savefig(file_path)
         plt.close()
         return fpr, tpr, roc_auc
 
@@ -122,7 +120,6 @@ class Plot:
         X_test (array-like): Test features.
         y_test (array-like): True labels for the test data.
         """
-        os.makedirs(output_dir, exist_ok=True)
         tprs = []
         aucs = []
         mean_fpr = np.linspace(0, 1, 100)
@@ -144,7 +141,7 @@ class Plot:
         mean_tpr = np.mean(tprs, axis=0)
         mean_tpr[-1] = 1.0
         mean_auc = auc(mean_fpr, mean_tpr)
-
+        os.makedirs(output_dir, exist_ok=True)
         plt.plot(mean_fpr, mean_tpr, color='b',
                  label=f'Mean ROC (AUC = {mean_auc:.2f})', lw=2, alpha=0.8)
 

@@ -124,6 +124,7 @@ class ReportManager(Plot):
         self.classification_report(report_dt, accuracy_dt,
                                    conf_matrix_dt, model_name_dt)
 
+        #  Plotting the classifiers
         self.roc_report(fpr_dt, tpr_dt, roc_auc_dt, model_name_dt)
         Plot(training_features, training_labels, testing_features,
              testing_labels).plot_classifier()
